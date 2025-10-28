@@ -1,0 +1,55 @@
+services:
+  amneziawg:
+    image: amneziavpn/amneziawg-go:latest
+    container_name: amneziawg
+    depends_on:
+      pihole:
+        condition: service_healthy
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    sysctls:
+      - net.ipv4.ip_forward=1
+      - net.ipv4.conf.all.src_valid_mark=1
+    environment:
+      - AMNEZIAWG_IP=${WG_CIDR}
+      - AMNEZIAWG_PORT=${WG_PORT}
+    ports:
+      - "${WG_PORT}:${WG_PORT}/udp"
+    volumes:
+      - "${HOME}/amneziawg_data:/etc/amnezia"
+    restart: unless-stopped
+    networks:
+      vpn-net:
+        ipv4_address: 172.30.0.3
+
+  pihole:
+    image: pihole/pihole:latest
+    container_name: pihole
+    ports:
+      - "${PIHOLE_WEB_PORT}:80/tcp"
+    environment:
+      TZ: "${TZ}"
+      WEBPASSWORD: "${PIHOLE_PASS}"
+      PIHOLE_DNS_: "${PIHOLE_UPSTREAM_DNS}"
+      DNSMASQ_LISTENING: "all"
+    volumes:
+      - ${HOME}/pihole_config/etc-pihole:/etc/pihole
+      - ${HOME}/pihole_config/etc-dnsmasq.d:/etc/dnsmasq.d
+    healthcheck:
+      test: ["CMD", "dig", "pi.hole", "@127.0.0.1", "-p", "53"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      vpn-net:
+        ipv4_address: 172.30.0.2
+
+networks:
+  vpn-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24
