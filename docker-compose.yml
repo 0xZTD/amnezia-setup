@@ -21,6 +21,7 @@ services:
       - "${WG_PORT}:${WG_PORT}/udp"
     volumes:
       - "${HOME}/amneziawg_data:/etc/amnezia"
+      - "${HOME}/amneziawg_config:/etc/wireguard"
     restart: unless-stopped
     networks:
       vpn-net:
