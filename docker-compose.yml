@@ -7,6 +7,7 @@ services:
         condition: service_healthy
     cap_add:
       - NET_ADMIN
+      - SYS_MODULE
     devices:
       - /dev/net/tun:/dev/net/tun
     sysctls:
@@ -15,6 +16,7 @@ services:
     environment:
       - AMNEZIAWG_IP=${WG_CIDR}
       - AMNEZIAWG_PORT=${WG_PORT}
+    command: ["sh", "-c", "amneziawg-go -f wg0"]
     ports:
       - "${WG_PORT}:${WG_PORT}/udp"
     volumes:
